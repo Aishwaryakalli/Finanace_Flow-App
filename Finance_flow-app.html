@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flow — Personal Finance for Young Professionals</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14; --surface: #151820; --surface2: #1c2030; --border: #252a3a;
+    --accent: #6ee7b7; --accent2: #818cf8; --accent3: #f472b6;
+    --warn: #fb923c; --text: #e2e8f0; --muted: #64748b; --card-radius: 20px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+  .app-shell { width: 100%; max-width: 420px; min-height: 100vh; background: var(--bg); display: flex; flex-direction: column; position: relative; overflow: hidden; }
+  .screen { display: none; flex-direction: column; flex: 1; animation: fadeIn .3s ease; }
+  .screen.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  #screen-onboarding { justify-content: center; align-items: center; padding: 40px 32px; background: radial-gradient(ellipse at 50% 0%, #1a2545 0%, var(--bg) 70%); text-align: center; gap: 28px; }
+  #screen-signup { justify-content: center; align-items: center; padding: 40px 32px; background: radial-gradient(ellipse at 50% 0%, #1a2545 0%, var(--bg) 70%); gap: 16px; }
+
+  .logo-mark { width: 72px; height: 72px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 22px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: #0d0f14; box-shadow: 0 0 40px rgba(110,231,183,.3); }
+  .onboard-headline { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; line-height: 1.15; background: linear-gradient(135deg, var(--text), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .onboard-sub { font-size: 15px; color: var(--muted); line-height: 1.6; max-width: 300px; }
+  .pill-tags { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .pill { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--border); font-size: 12px; color: var(--muted); background: var(--surface); }
+
+  .btn-primary { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--accent), #34d399); color: #0d0f14; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; border: none; border-radius: 14px; cursor: pointer; transition: transform .15s, box-shadow .15s; letter-spacing: .3px; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(110,231,183,.3); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 12px 24px; border-radius: 12px; cursor: pointer; font-size: 13px; transition: border-color .2s, color .2s; width: 100%; }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .topbar { padding: 20px 24px 12px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .avatar-btn { width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent2), var(--accent3)); border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white; font-family: 'Syne', sans-serif; }
+
+  .scroll-content { flex: 1; overflow-y: auto; padding: 0 20px 100px; scrollbar-width: none; }
+  .scroll-content::-webkit-scrollbar { display: none; }
+
+  .balance-hero { background: linear-gradient(135deg, #1a2545, #1c1030); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 28px 24px; margin-bottom: 20px; position: relative; overflow: hidden; }
+  .balance-hero::before { content: ''; position: absolute; top: -40px; right: -40px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(110,231,183,.12) 0%, transparent 70%); border-radius: 50%; }
+  .balance-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .balance-amount { font-family: 'Syne', sans-serif; font-size: 40px; font-weight: 800; line-height: 1; margin-bottom: 16px; }
+  .balance-chips { display: flex; gap: 12px; }
+  .balance-chip { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  .chip-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .wellness-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 20px; margin-bottom: 20px; cursor: pointer; transition: border-color .2s; }
+  .wellness-card:hover { border-color: var(--accent); }
+  .wellness-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .wellness-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
+  .wellness-badge { font-size: 11px; padding: 4px 10px; border-radius: 999px; background: rgba(110,231,183,.15); color: var(--accent); border: 1px solid rgba(110,231,183,.3); }
+  .score-ring-wrapper { display: flex; align-items: center; gap: 20px; }
+  .score-ring { position: relative; width: 80px; height: 80px; }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-ring .ring-bg { fill: none; stroke: var(--surface2); stroke-width: 6; }
+  .score-ring .ring-fill { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 220; stroke-dashoffset: 55; }
+  .score-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+  .score-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; line-height: 1; }
+  .score-lbl { font-size: 9px; color: var(--muted); }
+  .score-insights { flex: 1; }
+  .insight-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: var(--muted); }
+  .insight-row span:last-child { color: var(--text); }
+
+  .section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 12px; margin-top: 8px; }
+
+  .spend-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+  .spend-row { display: flex; align-items: center; gap: 12px; }
+  .spend-icon { width: 38px; height: 38px; background: var(--surface2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .spend-info { flex: 1; }
+  .spend-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+  .spend-bar-bg { height: 4px; background: var(--surface2); border-radius: 999px; overflow: hidden; }
+  .spend-bar-fill { height: 100%; border-radius: 999px; }
+
+  .goal-cards { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 20px; scrollbar-width: none; }
+  .goal-cards::-webkit-scrollbar { display: none; }
+  .goal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; min-width: 150px; flex-shrink: 0; cursor: pointer; transition: border-color .2s, transform .15s; }
+  .goal-card:hover { border-color: var(--accent2); transform: translateY(-2px); }
+  .goal-emoji { font-size: 24px; margin-bottom: 8px; }
+  .goal-name { font-size: 13px; font-weight: 500; margin-bottom: 12px; }
+  .goal-progress-bg { height: 4px; background: var(--surface2); border-radius: 999px; margin-bottom: 6px; overflow: hidden; }
+  .goal-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent2), var(--accent)); }
+  .goal-pct { font-size: 11px; color: var(--muted); }
+
+  .tx-list { display: flex; flex-direction: column; gap: 2px; }
+  .tx-item { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .tx-icon { width: 40px; height: 40px; background: var(--surface2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .tx-info { flex: 1; }
+  .tx-name { font-size: 14px; margin-bottom: 2px; }
+  .tx-date { font-size: 11px; color: var(--muted); }
+  .tx-amount { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
+  .amount-neg { color: var(--warn); }
+  .amount-pos { color: var(--accent); }
+
+  .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 420px; background: rgba(13,15,20,.95); border-top: 1px solid var(--border); backdrop-filter: blur(20px); display: flex; padding: 12px 0 24px; z-index: 100; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 6px 0; transition: all .2s; background: none; border: none; color: var(--muted); }
+  .nav-item.active { color: var(--accent); }
+  .nav-icon { font-size: 22px; }
+  .nav-label { font-size: 10px; font-weight: 500; }
+
+  .insight-page { padding: 0 20px 100px; }
+  .insight-hero { background: linear-gradient(135deg, #1c1030, #1a1535); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 24px; margin-bottom: 20px; text-align: center; }
+  .insight-hero h2 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  .insight-cards { display: flex; flex-direction: column; gap: 14px; }
+  .insight-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; display: flex; gap: 14px; align-items: flex-start; }
+  .insight-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .insight-card-text h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .insight-card-text p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  .checkin-card { background: linear-gradient(135deg, #1a2545, #111825); border: 1px solid rgba(129,140,248,.3); border-radius: var(--card-radius); padding: 24px; margin-bottom: 20px; }
+  .checkin-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 4px; }
+  .checkin-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+  .mood-options { display: flex; justify-content: space-between; margin-bottom: 20px; }
+  .mood-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; background: var(--surface); border: 2px solid var(--border); border-radius: 14px; padding: 12px 10px; cursor: pointer; flex: 1; margin: 0 4px; transition: all .2s; }
+  .mood-btn:first-child { margin-left: 0; }
+  .mood-btn:last-child { margin-right: 0; }
+  .mood-btn .mood-emoji { font-size: 24px; }
+  .mood-btn .mood-text { font-size: 10px; color: var(--muted); }
+  .mood-btn.selected { border-color: var(--accent2); background: rgba(129,140,248,.1); }
+
+  .goals-page { padding: 0 20px 100px; }
+  .goals-list { display: flex; flex-direction: column; gap: 14px; }
+  .goal-full-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 20px; transition: border-color .2s; }
+  .goal-full-card:hover { border-color: var(--accent); }
+  .goal-full-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .goal-full-left { display: flex; gap: 12px; align-items: center; }
+  .goal-full-emoji { width: 48px; height: 48px; background: var(--surface2); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .goal-full-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+  .goal-full-deadline { font-size: 11px; color: var(--muted); }
+  .goal-full-pct { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--accent); }
+  .goal-full-bar-bg { height: 6px; background: var(--surface2); border-radius: 999px; margin-bottom: 12px; overflow: hidden; }
+  .goal-full-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent2), var(--accent)); }
+  .goal-full-amounts { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  .goal-full-amounts span:last-child { color: var(--text); }
+
+  .profile-page { padding: 0 20px 100px; }
+  .profile-hero { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 32px 0 24px; }
+  .profile-avatar { width: 80px; height: 80px; background: linear-gradient(135deg, var(--accent2), var(--accent3)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: white; margin-bottom: 4px; }
+  .profile-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; }
+  .profile-role { font-size: 13px; color: var(--muted); }
+  .profile-stats { display: flex; gap: 12px; margin-bottom: 24px; }
+  .profile-stat { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; text-align: center; }
+  .profile-stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; color: var(--accent); }
+  .profile-stat-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .settings-list { display: flex; flex-direction: column; gap: 2px; }
+  .settings-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: opacity .2s; }
+  .settings-item:hover { opacity: .7; }
+  .settings-left { display: flex; align-items: center; gap: 12px; }
+  .settings-icon { width: 36px; height: 36px; background: var(--surface2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .settings-text { font-size: 14px; }
+  .settings-arrow { color: var(--muted); font-size: 16px; }
+
+  .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface2); border: 1px solid var(--accent); color: var(--accent); padding: 10px 20px; border-radius: 999px; font-size: 13px; opacity: 0; transition: all .3s; pointer-events: none; z-index: 200; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); z-index: 300; justify-content: flex-end; align-items: flex-end; }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet { background: var(--surface); border-radius: 24px 24px 0 0; padding: 24px 24px 40px; width: 100%; max-width: 420px; animation: slideUp .3s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 999px; margin: 0 auto 20px; }
+  .modal-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; display: block; }
+  .form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; color: var(--text); font-size: 15px; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color .2s; }
+  .form-input:focus { border-color: var(--accent); }
+  .category-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cat-chip { padding: 8px 14px; border-radius: 999px; background: var(--surface2); border: 1px solid var(--border); font-size: 12px; cursor: pointer; transition: all .15s; color: var(--text); }
+  .cat-chip.selected { background: rgba(110,231,183,.15); border-color: var(--accent); color: var(--accent); }
+  .fab { position: fixed; bottom: 88px; right: calc(50% - 210px + 20px); width: 52px; height: 52px; background: linear-gradient(135deg, var(--accent), #34d399); border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #0d0f14; font-weight: 700; box-shadow: 0 4px 20px rgba(110,231,183,.4); z-index: 101; transition: transform .15s; }
+  .fab:hover { transform: scale(1.1); }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ONBOARDING -->
+  <div id="screen-onboarding" class="screen active">
+    <div class="logo-mark">F</div>
+    <div><div class="onboard-headline">Money that<br>makes sense</div></div>
+    <div class="onboard-sub">Flow helps young professionals understand their money habits — without the overwhelm.</div>
+    <div class="pill-tags">
+      <span class="pill">📊 Spending Overview</span>
+      <span class="pill">🎯 Goal Tracking</span>
+      <span class="pill">💡 Smart Insights</span>
+      <span class="pill">✨ Wellness Score</span>
+    </div>
+    <div style="width:100%">
+      <button class="btn-primary" onclick="goTo('signup')">Get Started →</button>
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px;">
+        <button class="btn-ghost" onclick="loginAs('arjun')">Login as Arjun (Software Engineer)</button>
+        <button class="btn-ghost" onclick="loginAs('priya')">Login as Priya (Student)</button>
+        <button class="btn-ghost" onclick="loginAs('rahul')">Login as Rahul (Student)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIGNUP -->
+  <div id="screen-signup" class="screen">
+    <div style="padding:40px 32px;display:flex;flex-direction:column;align-items:center;gap:20px;flex:1;justify-content:center;width:100%;">
+      <div class="logo-mark">F</div>
+      <div class="onboard-headline" style="text-align:center;">Create Account</div>
+      <div style="width:100%">
+        <div class="form-group">
+          <label class="form-label">Your Name</label>
+          <input class="form-input" type="text" id="signup-name" placeholder="Enter your name"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" id="signup-email" placeholder="Enter your email"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="signup-pass" placeholder="Create password"/>
+        </div>
+        <button class="btn-primary" onclick="registerUser()">Create Account →</button>
+        <button class="btn-ghost" onclick="goTo('onboarding')" style="margin-top:12px;">← Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="screen-home" class="screen">
+    <div class="topbar">
+      <div class="topbar-logo">flow</div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <span style="font-size:12px;color:var(--muted);">Apr 2026</span>
+        <button class="avatar-btn" id="avatar-home" onclick="goTo('profile')">A</button>
+      </div>
+    </div>
+    <div class="scroll-content">
+      <div class="balance-hero">
+        <div class="balance-label">Net Worth</div>
+        <div class="balance-amount" id="balance-amount">💰 ₹2,84,500</div>
+        <div class="balance-chips">
+          <div class="balance-chip"><div class="chip-dot" style="background:var(--accent)"></div><span style="color:var(--muted)">Income</span><span id="income-chip" style="color:var(--accent)">+₹95,000</span></div>
+          <div class="balance-chip"><div class="chip-dot" style="background:var(--warn)"></div><span style="color:var(--muted)">Spent</span><span id="spent-chip" style="color:var(--warn)">-₹42,300</span></div>
+        </div>
+      </div>
+
+      <div class="wellness-card" onclick="goTo('insights')">
+        <div class="wellness-header"><div class="wellness-title">💚 Financial Wellness</div><div class="wellness-badge">Good</div></div>
+        <div class="score-ring-wrapper">
+          <div class="score-ring">
+            <svg width="80" height="80" viewBox="0 0 80 80"><circle class="ring-bg" cx="40" cy="40" r="35"/><circle class="ring-fill" cx="40" cy="40" r="35"/></svg>
+            <div class="score-center"><div class="score-num">75</div><div class="score-lbl">/100</div></div>
+          </div>
+          <div class="score-insights">
+            <div class="insight-row"><span>Savings rate</span><span id="savings-rate">28%</span></div>
+            <div class="insight-row"><span>Budget used</span><span>65%</span></div>
+            <div class="insight-row"><span>Goals on track</span><span>3/4</span></div>
+            <div class="insight-row" style="margin-bottom:0"><span>Emergency fund</span><span>4.2 mo</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">This Month's Spending</div>
+      <div class="spend-list">
+        <div class="spend-row"><div class="spend-icon">🏠</div><div class="spend-info"><div class="spend-top"><span>Housing</span><span id="spend-housing" style="color:var(--text)">₹18,000</span></div><div class="spend-bar-bg"><div class="spend-bar-fill" style="width:72%;background:var(--accent2)"></div></div></div></div>
+        <div class="spend-row"><div class="spend-icon">🍜</div><div class="spend-info"><div class="spend-top"><span>Food & Dining</span><span id="spend-food" style="color:var(--text)">₹8,400</span></div><div class="spend-bar-bg"><div class="spend-bar-fill" style="width:54%;background:var(--accent)"></div></div></div></div>
+        <div class="spend-row"><div class="spend-icon">🚗</div><div class="spend-info"><div class="spend-top"><span>Transport</span><span id="spend-transport" style="color:var(--warn)">₹6,200</span></div><div class="spend-bar-bg"><div class="spend-bar-fill" style="width:82%;background:var(--warn)"></div></div></div></div>
+        <div class="spend-row"><div class="spend-icon">🎮</div><div class="spend-info"><div class="spend-top"><span>Entertainment</span><span id="spend-entertainment" style="color:var(--text)">₹3,100</span></div><div class="spend-bar-bg"><div class="spend-bar-fill" style="width:38%;background:var(--accent3)"></div></div></div></div>
+        <div class="spend-row"><div class="spend-icon">💊</div><div class="spend-info"><div class="spend-top"><span>Health</span><span id="spend-health" style="color:var(--text)">₹2,800</span></div><div class="spend-bar-bg"><div class="spend-bar-fill" style="width:22%;background:var(--accent)"></div></div></div></div>
+      </div>
+
+      <div class="section-title">Goals</div>
+      <div class="goal-cards">
+        <div class="goal-card" onclick="goTo('goals')"><div class="goal-emoji">✈️</div><div class="goal-name">Bali Trip</div><div class="goal-progress-bg"><div class="goal-progress-fill" style="width:68%"></div></div><div class="goal-pct">68% • ₹68k / ₹1L</div></div>
+        <div class="goal-card" onclick="goTo('goals')"><div class="goal-emoji">💻</div><div class="goal-name">New MacBook</div><div class="goal-progress-bg"><div class="goal-progress-fill" style="width:45%"></div></div><div class="goal-pct">45% • ₹54k / ₹1.2L</div></div>
+        <div class="goal-card" onclick="goTo('goals')"><div class="goal-emoji">🏠</div><div class="goal-name">House Down Payment</div><div class="goal-progress-bg"><div class="goal-progress-fill" style="width:22%"></div></div><div class="goal-pct">22% • ₹2.2L / ₹10L</div></div>
+        <div class="goal-card" onclick="goTo('goals')"><div class="goal-emoji">📈</div><div class="goal-name">Investment Fund</div><div class="goal-progress-bg"><div class="goal-progress-fill" style="width:85%"></div></div><div class="goal-pct">85% • ₹85k / ₹1L</div></div>
+      </div>
+
+      <div class="section-title">Recent Transactions</div>
+      <div class="tx-list">
+        <div class="tx-item"><div class="tx-icon" id="tx1-icon">☕</div><div class="tx-info"><div class="tx-name" id="tx1-name">Blue Tokai Coffee</div><div class="tx-date">Today, 9:14 AM</div></div><div class="tx-amount amount-neg" id="tx1-amount">-₹320</div></div>
+        <div class="tx-item"><div class="tx-icon" id="tx2-icon">💰</div><div class="tx-info"><div class="tx-name" id="tx2-name">Salary Credit</div><div class="tx-date">Apr 1, 2026</div></div><div class="tx-amount amount-pos" id="tx2-amount">+₹95,000</div></div>
+        <div class="tx-item"><div class="tx-icon">🛒</div><div class="tx-info"><div class="tx-name">DMart Groceries</div><div class="tx-date">Mar 31, 2026</div></div><div class="tx-amount amount-neg">-₹2,140</div></div>
+        <div class="tx-item"><div class="tx-icon">🎬</div><div class="tx-info"><div class="tx-name">Netflix</div><div class="tx-date">Mar 30, 2026</div></div><div class="tx-amount amount-neg">-₹649</div></div>
+        <div class="tx-item"><div class="tx-icon">🏋️</div><div class="tx-info"><div class="tx-name">Cult.fit Membership</div><div class="tx-date">Mar 28, 2026</div></div><div class="tx-amount amount-neg">-₹1,999</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div id="screen-insights" class="screen">
+    <div class="topbar">
+      <div class="topbar-logo">insights</div>
+      <button class="avatar-btn" id="avatar-insights" onclick="goTo('profile')">A</button>
+    </div>
+    <div class="scroll-content insight-page">
+      <div class="insight-hero"><h2>🧠 Your Money Story</h2><p style="font-size:13px;color:var(--muted);line-height:1.5">Based on April 2026. You're doing better than 72% of people in your income bracket.</p></div>
+      <div class="checkin-card">
+        <div class="checkin-title">Weekly Check-in</div>
+        <div class="checkin-sub">How are you feeling about your finances this week?</div>
+        <div class="mood-options">
+          <button class="mood-btn" onclick="selectMood(this)"><span class="mood-emoji">😰</span><span class="mood-text">Stressed</span></button>
+          <button class="mood-btn" onclick="selectMood(this)"><span class="mood-emoji">😐</span><span class="mood-text">Neutral</span></button>
+          <button class="mood-btn selected" onclick="selectMood(this)"><span class="mood-emoji">😊</span><span class="mood-text">Good</span></button>
+          <button class="mood-btn" onclick="selectMood(this)"><span class="mood-emoji">🤩</span><span class="mood-text">Great</span></button>
+        </div>
+        <button class="btn-primary" style="font-size:13px;padding:12px" onclick="showToast('Check-in saved! Keep it up 🎉')">Save Check-in</button>
+      </div>
+      <div class="section-title">Smart Insights</div>
+      <div class="insight-cards">
+        <div class="insight-card"><div class="insight-icon" style="background:rgba(251,146,60,.15)">⚠️</div><div class="insight-card-text"><h4>Transport spending is high</h4><p>You've spent on transport — 82% of your monthly budget. Consider metro or carpooling to save more.</p></div></div>
+        <div class="insight-card"><div class="insight-icon" style="background:rgba(110,231,183,.15)">🎯</div><div class="insight-card-text"><h4>Bali goal almost there!</h4><p>You're 68% to your Bali trip goal. At your current savings rate, you'll hit it in 6 weeks!</p></div></div>
+        <div class="insight-card"><div class="insight-icon" style="background:rgba(129,140,248,.15)">📈</div><div class="insight-card-text"><h4>Investment fund nearly full</h4><p>Your investment fund is at 85%. Consider moving savings this month to complete it and start compounding.</p></div></div>
+        <div class="insight-card"><div class="insight-icon" style="background:rgba(244,114,182,.15)">💡</div><div class="insight-card-text"><h4>Subscriptions audit</h4><p>You have 4 active subscriptions. Review if you're using all of them — some may overlap!</p></div></div>
+        <div class="insight-card"><div class="insight-icon" style="background:rgba(110,231,183,.15)">🏆</div><div class="insight-card-text"><h4>Great savings rate!</h4><p>Your savings rate is excellent. Keep this up and you'll build wealth much faster than average!</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOALS -->
+  <div id="screen-goals" class="screen">
+    <div class="topbar">
+      <div class="topbar-logo">goals</div>
+      <button class="avatar-btn" id="avatar-goals" onclick="goTo('profile')">A</button>
+    </div>
+    <div class="scroll-content goals-page">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;">Your Goals</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">3 of 4 goals on track</div></div>
+        <button class="btn-primary" style="width:auto;padding:10px 18px;font-size:13px;" onclick="showToast('Goal creation coming soon!')">+ New Goal</button>
+      </div>
+      <div class="goals-list">
+        <div class="goal-full-card"><div class="goal-full-header"><div class="goal-full-left"><div class="goal-full-emoji">✈️</div><div><div class="goal-full-name">Bali Trip</div><div class="goal-full-deadline">🗓 Target: June 2026</div></div></div><div class="goal-full-pct">68%</div></div><div class="goal-full-bar-bg"><div class="goal-full-bar-fill" style="width:68%"></div></div><div class="goal-full-amounts"><span>₹68,000 saved</span><span>₹1,00,000 target</span></div></div>
+        <div class="goal-full-card"><div class="goal-full-header"><div class="goal-full-left"><div class="goal-full-emoji">💻</div><div><div class="goal-full-name">New MacBook Pro</div><div class="goal-full-deadline">🗓 Target: Aug 2026</div></div></div><div class="goal-full-pct">45%</div></div><div class="goal-full-bar-bg"><div class="goal-full-bar-fill" style="width:45%"></div></div><div class="goal-full-amounts"><span>₹54,000 saved</span><span>₹1,20,000 target</span></div></div>
+        <div class="goal-full-card"><div class="goal-full-header"><div class="goal-full-left"><div class="goal-full-emoji">🏠</div><div><div class="goal-full-name">House Down Payment</div><div class="goal-full-deadline">🗓 Target: Dec 2028</div></div></div><div class="goal-full-pct">22%</div></div><div class="goal-full-bar-bg"><div class="goal-full-bar-fill" style="width:22%"></div></div><div class="goal-full-amounts"><span>₹2,20,000 saved</span><span>₹10,00,000 target</span></div></div>
+        <div class="goal-full-card"><div class="goal-full-header"><div class="goal-full-left"><div class="goal-full-emoji">📈</div><div><div class="goal-full-name">Investment Fund</div><div class="goal-full-deadline">🗓 Target: May 2026</div></div></div><div class="goal-full-pct">85%</div></div><div class="goal-full-bar-bg"><div class="goal-full-bar-fill" style="width:85%"></div></div><div class="goal-full-amounts"><span>₹85,000 saved</span><span>₹1,00,000 target</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div id="screen-profile" class="screen">
+    <div class="topbar"><div class="topbar-logo">profile</div></div>
+    <div class="scroll-content profile-page">
+      <div class="profile-hero">
+        <div class="profile-avatar" id="profile-avatar">A</div>
+        <div class="profile-name" id="profile-name">Arjun Mehta</div>
+        <div class="profile-role" id="profile-role">Software Engineer · Bengaluru</div>
+      </div>
+      <div class="profile-stats">
+        <div class="profile-stat"><div class="profile-stat-num" id="stat-savings">28%</div><div class="profile-stat-lbl">Savings Rate</div></div>
+        <div class="profile-stat"><div class="profile-stat-num">75</div><div class="profile-stat-lbl">Wellness Score</div></div>
+        <div class="profile-stat"><div class="profile-stat-num">4</div><div class="profile-stat-lbl">Active Goals</div></div>
+      </div>
+      <div class="section-title">Settings</div>
+      <div class="settings-list">
+        <div class="settings-item" onclick="showToast('Account settings coming soon')"><div class="settings-left"><div class="settings-icon">👤</div><div class="settings-text">Account Details</div></div><div class="settings-arrow">›</div></div>
+        <div class="settings-item" onclick="showToast('Linked accounts coming soon')"><div class="settings-left"><div class="settings-icon">🏦</div><div class="settings-text">Linked Bank Accounts</div></div><div class="settings-arrow">›</div></div>
+        <div class="settings-item" onclick="showToast('Notifications configured!')"><div class="settings-left"><div class="settings-icon">🔔</div><div class="settings-text">Notifications</div></div><div class="settings-arrow">›</div></div>
+        <div class="settings-item" onclick="showToast('Budget limits coming soon')"><div class="settings-left"><div class="settings-icon">💰</div><div class="settings-text">Budget Limits</div></div><div class="settings-arrow">›</div></div>
+        <div class="settings-item" onclick="showToast('Privacy settings coming soon')"><div class="settings-left"><div class="settings-icon">🔒</div><div class="settings-text">Privacy & Security</div></div><div class="settings-arrow">›</div></div>
+        <div class="settings-item" onclick="goTo('onboarding')"><div class="settings-left"><div class="settings-icon">🚪</div><div class="settings-text" style="color:var(--warn)">Sign Out</div></div><div class="settings-arrow">›</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav" id="bottom-nav" style="display:none;">
+    <button class="nav-item active" id="nav-home" onclick="goTo('home')"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+    <button class="nav-item" id="nav-insights" onclick="goTo('insights')"><span class="nav-icon">💡</span><span class="nav-label">Insights</span></button>
+    <button class="nav-item" id="nav-goals" onclick="goTo('goals')"><span class="nav-icon">🎯</span><span class="nav-label">Goals</span></button>
+    <button class="nav-item" id="nav-profile" onclick="goTo('profile')"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
+  </nav>
+
+  <button class="fab" id="fab" style="display:none;" onclick="openModal()">+</button>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Add Expense</div>
+      <div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" type="number" placeholder="0.00" id="input-amount"/></div>
+      <div class="form-group"><label class="form-label">Description</label><input class="form-input" type="text" placeholder="What did you spend on?" id="input-desc"/></div>
+      <div class="form-group"><label class="form-label">Category</label><div class="category-chips"><span class="cat-chip selected" onclick="selectChip(this)">🍜 Food</span><span class="cat-chip" onclick="selectChip(this)">🚗 Transport</span><span class="cat-chip" onclick="selectChip(this)">🛒 Shopping</span><span class="cat-chip" onclick="selectChip(this)">🎮 Entertainment</span><span class="cat-chip" onclick="selectChip(this)">💊 Health</span></div></div>
+      <button class="btn-primary" onclick="addExpense()" style="margin-top:8px">Add Expense</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  var users = {
+    arjun: { name:'Arjun Mehta', role:'Software Engineer · Bengaluru', avatar:'A', balance:'💰 ₹2,84,500', income:'+₹95,000', spent:'-₹42,300', savings:'28%', t1icon:'☕', t1name:'Blue Tokai Coffee', t1amt:'-₹320', t1cls:'amount-neg', t2icon:'💰', t2name:'Salary Credit', t2amt:'+₹95,000', t2cls:'amount-pos', housing:'₹18,000', food:'₹8,400', transport:'₹6,200', entertainment:'₹3,100', health:'₹2,800' },
+    priya: { name:'Priya Sharma', role:'Student · Mumbai', avatar:'P', balance:'💰 ₹45,200', income:'+₹25,000', spent:'-₹12,400', savings:'15%', t1icon:'🍽️', t1name:'College Canteen', t1amt:'-₹120', t1cls:'amount-neg', t2icon:'🎓', t2name:'Scholarship Credit', t2amt:'+₹25,000', t2cls:'amount-pos', housing:'₹8,000', food:'₹3,200', transport:'₹2,100', entertainment:'₹1,500', health:'₹800' },
+    rahul: { name:'Rahul Verma', role:'Student · Delhi', avatar:'R', balance:'💰 ₹32,800', income:'+₹15,000', spent:'-₹9,800', savings:'10%', t1icon:'🛵', t1name:'Zomato Order', t1amt:'-₹340', t1cls:'amount-neg', t2icon:'💼', t2name:'Part Time Work', t2amt:'+₹15,000', t2cls:'amount-pos', housing:'₹6,000', food:'₹2,800', transport:'₹1,800', entertainment:'₹1,200', health:'₹600' }
+  };
+
+  function applyUser(u) {
+    document.getElementById('balance-amount').textContent = u.balance;
+    document.getElementById('income-chip').textContent = u.income;
+    document.getElementById('spent-chip').textContent = u.spent;
+    document.getElementById('profile-name').textContent = u.name;
+    document.getElementById('profile-role').textContent = u.role;
+    document.getElementById('profile-avatar').textContent = u.avatar;
+    document.getElementById('stat-savings').textContent = u.savings;
+    document.getElementById('savings-rate').textContent = u.savings;
+    document.getElementById('avatar-home').textContent = u.avatar;
+    document.getElementById('avatar-insights').textContent = u.avatar;
+    document.getElementById('avatar-goals').textContent = u.avatar;
+    document.getElementById('tx1-icon').textContent = u.t1icon;
+    document.getElementById('tx1-name').textContent = u.t1name;
+    document.getElementById('tx1-amount').textContent = u.t1amt;
+    document.getElementById('tx1-amount').className = 'tx-amount ' + u.t1cls;
+    document.getElementById('tx2-icon').textContent = u.t2icon;
+    document.getElementById('tx2-name').textContent = u.t2name;
+    document.getElementById('tx2-amount').textContent = u.t2amt;
+    document.getElementById('tx2-amount').className = 'tx-amount ' + u.t2cls;
+    document.getElementById('spend-housing').textContent = u.housing;
+    document.getElementById('spend-food').textContent = u.food;
+    document.getElementById('spend-transport').textContent = u.transport;
+    document.getElementById('spend-entertainment').textContent = u.entertainment;
+    document.getElementById('spend-health').textContent = u.health;
+  }
+
+  function loginAs(user) {
+    applyUser(users[user]);
+    goTo('home');
+    showToast('Welcome back, ' + users[user].name.split(' ')[0] + '! 👋');
+  }
+
+  function registerUser() {
+    var name = document.getElementById('signup-name').value.trim();
+    var email = document.getElementById('signup-email').value.trim();
+    var pass = document.getElementById('signup-pass').value.trim();
+    if (!name) { showToast('Please enter your name!'); return; }
+    if (!email) { showToast('Please enter your email!'); return; }
+    if (!pass) { showToast('Please enter your password!'); return; }
+    var newUser = { name:name, role:'New User · Flow App', avatar:name[0].toUpperCase(), balance:'💰 ₹0', income:'+₹0', spent:'-₹0', savings:'0%', t1icon:'🎉', t1name:'Welcome to Flow!', t1amt:'₹0', t1cls:'amount-pos', t2icon:'📱', t2name:'Account Created', t2amt:'₹0', t2cls:'amount-pos', housing:'₹0', food:'₹0', transport:'₹0', entertainment:'₹0', health:'₹0' };
+    applyUser(newUser);
+    goTo('home');
+    showToast('Welcome to Flow, ' + name + '! 🎉');
+  }
+
+  function goTo(screen) {
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+    document.getElementById('screen-' + screen).classList.add('active');
+    var nav = document.getElementById('bottom-nav');
+    var fab = document.getElementById('fab');
+    if (screen === 'onboarding' || screen === 'signup') {
+      nav.style.display = 'none';
+      fab.style.display = 'none';
+    } else {
+      nav.style.display = 'flex';
+      fab.style.display = screen === 'home' ? 'flex' : 'none';
+      document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+      var activeNav = document.getElementById('nav-' + screen);
+      if (activeNav) activeNav.classList.add('active');
+    }
+  }
+
+  function openModal() { document.getElementById('modal').classList.add('open'); }
+  function closeModal() { document.getElementById('modal').classList.remove('open'); }
+  function closeModalOutside(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+
+  function addExpense() {
+    var amount = document.getElementById('input-amount').value;
+    var desc = document.getElementById('input-desc').value;
+    if (!amount || !desc) { showToast('Please fill in all fields'); return; }
+    closeModal();
+    showToast('₹' + amount + ' added for "' + desc + '" ✓');
+    document.getElementById('input-amount').value = '';
+    document.getElementById('input-desc').value = '';
+  }
+
+  function selectChip(el) {
+    el.closest('.category-chips').querySelectorAll('.cat-chip').forEach(function(c) { c.classList.remove('selected'); });
+    el.classList.add('selected');
+  }
+
+  function selectMood(el) {
+    document.querySelectorAll('.mood-btn').forEach(function(b) { b.classList.remove('selected'); });
+    el.classList.add('selected');
+  }
+
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 2800);
+  }
+</script>
+</body>
+</html>
